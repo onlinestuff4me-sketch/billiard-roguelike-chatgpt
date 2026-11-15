@@ -128,8 +128,8 @@ func _place_decor() -> void:
 			var l := PointLight2D.new()
 			l.texture = light_tex
 			l.position = pos
-			l.texture_scale = 3.2
-			l.energy = 0.9
+			l.texture_scale = 3.6
+			l.energy = 1.2
 			l.color = theme["accent"]
 			l.set_meta("flicker", rng.randf() * 10.0)
 			add_child(l)
@@ -143,7 +143,7 @@ func _process(_delta: float) -> void:
 	for child in get_children():
 		if child is PointLight2D and child.has_meta("flicker"):
 			var f: float = child.get_meta("flicker")
-			child.energy = 0.8 + sin(t * 9.0 + f) * 0.08 + sin(t * 23.0 + f * 2.0) * 0.05
+			child.energy = 1.15 + sin(t * 9.0 + f) * 0.1 + sin(t * 23.0 + f * 2.0) * 0.05
 
 
 func _build_collision() -> void:

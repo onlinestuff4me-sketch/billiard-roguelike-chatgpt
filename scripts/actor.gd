@@ -18,6 +18,7 @@ var flash_t := 0.0
 var squash := Vector2.ONE
 var anim_t := 0.0
 var facing := 1.0
+var _last_safe := Vector2.INF
 
 
 func setup_collision(layer: int, mask: int) -> void:
@@ -39,6 +40,7 @@ func take_hit(amount: float, from: Vector2, knockback := 260.0, crit := false) -
 	flash_t = 0.12
 	squash = Vector2(1.35, 0.7)
 	knock += (global_position - from).normalized() * knockback
+	knock = knock.limit_length(900.0)
 	_on_hurt(dealt, crit)
 	if hp <= 0.0:
 		hp = 0.0
@@ -55,6 +57,19 @@ func heal(amount: float) -> void:
 	hp = minf(max_hp, hp + amount)
 	if hp - before >= 1.0:
 		Fx.float_text(global_position, "+%d" % int(hp - before), Color(0.45, 1.0, 0.5))
+
+
+## Safety net after move_and_slide: heavy knockback must never leave an
+## actor embedded in a wall, which could strand a boss and seal the stairs.
+func keep_on_floor() -> void:
+	var d: Dungeon = get_tree().get_first_node_in_group("dungeon")
+	if d == null:
+		return
+	if d.is_floor(d.world_to_cell(global_position)):
+		_last_safe = global_position
+	elif _last_safe != Vector2.INF:
+		global_position = _last_safe
+		knock = Vector2.ZERO
 
 
 func _on_hurt(_dealt: float, _crit: bool) -> void:

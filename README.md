@@ -31,9 +31,22 @@ Descend through procedurally generated depths beneath a drowned, lamplit city as
 
 ## Running
 
-1. Install Godot 4.5 or later (standard build, not .NET).
+1. Install Godot 4.7 or later (standard build, not .NET). Cloud sessions on the `billiard-roguelike-chatgpt` environment install it automatically.
 2. Open `project.godot` in the editor and press Play, or run `godot --path .` from this folder.
 3. For phones, add Android or iOS export presets in **Project → Export** (export templates required).
+
+## Bot playtest
+
+`tests/autoplay.tscn` plays the game through the same HUD inputs a thumb would use. It pathfinds to foes, holds STRIKE, uses skills and potions, clears each floor and takes the stairs, then prints a summary. It also reports any enemy that ends up inside a wall, and stalls.
+
+```bash
+# fast, headless (4 minutes of game time in about 15 s)
+godot --headless --path . --fixed-fps 60 tests/autoplay.tscn -- 240
+
+# with screenshots every 10 s (needs a display, e.g. xvfb-run)
+xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 1280x720 \
+  --fixed-fps 60 tests/autoplay.tscn -- 75 /tmp/shots
+```
 
 ## Layout
 
@@ -52,4 +65,5 @@ scripts/stairs.gd
 scripts/hud.gd       multi-touch controls, orbs, toasts, compass
 scripts/fx.gd        autoload: shake, hit-pause, particles, floating text
 scripts/sfx.gd       autoload: procedural sound synthesis
+tests/autoplay.*     bot playtest
 ```

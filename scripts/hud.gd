@@ -118,6 +118,11 @@ func _role_at(pos: Vector2) -> String:
 
 
 func _process(delta: float) -> void:
+	# Parent is a CanvasLayer, so anchors do not size us: follow the viewport.
+	var vs := get_viewport_rect().size
+	if size != vs:
+		position = Vector2.ZERO
+		size = vs
 	_t += delta
 	_damage_pulse = maxf(_damage_pulse - delta * 2.5, 0.0)
 	_fade = maxf(_fade - delta * 1.6, 0.0)
@@ -165,7 +170,7 @@ func _draw() -> void:
 	# Exit compass when the stairs are off-screen.
 	var ppos := player.get_global_transform_with_canvas().origin
 	var epos := player.get_canvas_transform() * exit_pos
-	if not Rect2(Vector2.ZERO, s).grow(-40).has_point(epos):
+	if s.x > 100.0 and s.y > 100.0 and not Rect2(Vector2.ZERO, s).grow(-40).has_point(epos):
 		var dir := (epos - ppos).normalized()
 		var edge := ppos + dir * minf(s.x, s.y) * 0.38
 		var tip := edge + dir * 18
@@ -223,16 +228,27 @@ func _draw_orb(c: Vector2, r: float, frac: float, col: Color, label: String) -> 
 	frac = clampf(frac, 0.0, 1.0)
 	draw_circle(c, r + 5, Color(0.12, 0.1, 0.09))
 	draw_circle(c, r, Color(0.04, 0.03, 0.03))
-	var level_y := c.y + r - 2.0 * r * frac
-	var pts := PackedVector2Array()
-	for i in 40:
-		var a := TAU * i / 40.0
-		var p := c + Vector2(cos(a), sin(a)) * r
-		var surface := level_y + sin(p.x * 0.12 + _t * 3.0) * 2.5
-		p.y = maxf(p.y, surface)
-		pts.append(p)
-	if frac > 0.01:
-		draw_colored_polygon(pts, col)
+	if frac >= 0.985:
+		draw_circle(c, r, col)
+	elif frac > 0.015:
+		# Liquid = circle segment under a gently waving surface.
+		var dy := r - 2.0 * r * frac  # surface offset from centre (+ is down)
+		var hw := sqrt(maxf(r * r - dy * dy, 0.0))
+		var pts := PackedVector2Array()
+		var steps := 14
+		for i in steps + 1:
+			var x := -hw + 2.0 * hw * float(i) / steps
+			var wave := sin((c.x + x) * 0.12 + _t * 3.0) * 2.5 * sin(PI * float(i) / steps)
+			var inside := sqrt(maxf(r * r - x * x, 0.0)) - 0.75
+			pts.append(c + Vector2(x, clampf(dy + wave, -inside, inside)))
+		var a0 := atan2(dy, hw)
+		var a1 := PI - a0
+		for i in range(1, 24):
+			var a := a0 + (a1 - a0) * float(i) / 24.0
+			pts.append(c + Vector2(cos(a), sin(a)) * r)
+		if hw > 3.0:
+			draw_colored_polygon(pts, col)
+	if frac > 0.015:
 		draw_circle(c + Vector2(0, r * 0.35), r * 0.45, Color(col.r, col.g, col.b, 0.25).lightened(0.3))
 	draw_circle(c + Vector2(-r * 0.35, -r * 0.4), r * 0.18, Color(1, 1, 1, 0.22))
 	draw_arc(c, r + 2, 0, TAU, 48, Color(0.55, 0.45, 0.3), 3.0)
@@ -245,7 +261,7 @@ func _draw_button(c: Vector2, r: float, label: String, col: Color, cooldown: flo
 	draw_circle(c, rr + 4, Color(0, 0, 0, 0.45))
 	draw_circle(c, rr, Color(col.r, col.g, col.b, 0.28 if not disabled else 0.1))
 	draw_arc(c, rr, 0, TAU, 48, Color(col.r, col.g, col.b, 0.9 if not disabled else 0.3), 3.0)
-	if cooldown > 0.0:
+	if cooldown > 0.02:
 		var pts := PackedVector2Array([c])
 		var steps := 32
 		for i in steps + 1:

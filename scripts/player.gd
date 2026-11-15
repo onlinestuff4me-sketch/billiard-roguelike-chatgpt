@@ -49,8 +49,8 @@ func _ready() -> void:
 	add_to_group("player")
 	light = PointLight2D.new()
 	light.texture = Fx.make_radial_texture(256, Color.WHITE, Color(1, 1, 1, 0))
-	light.texture_scale = 3.4
-	light.energy = 1.15
+	light.texture_scale = 4.2
+	light.energy = 1.5
 	light.color = Color(1.0, 0.83, 0.6)
 	add_child(light)
 	recalc()
@@ -126,7 +126,7 @@ func _physics_process(delta: float) -> void:
 		float(Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)) - float(Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)))
 	if kb != Vector2.ZERO:
 		move = kb.normalized()
-	var attacking := (hud != null and hud.attack_held) or Input.is_key_pressed(KEY_SPACE)
+	var attacking: bool = (hud != null and hud.attack_held) or Input.is_key_pressed(KEY_SPACE)
 
 	var target := nearest_enemy(300.0)
 	if target:
@@ -151,6 +151,7 @@ func _physics_process(delta: float) -> void:
 	var slow := 0.55 if swing_t < 0.6 else 1.0
 	velocity = move * speed * slow + knock
 	move_and_slide()
+	keep_on_floor()
 	if absf(aim.x) > 0.2:
 		facing = signf(aim.x)
 	if move.length() > 0.1:
@@ -317,7 +318,7 @@ func _draw() -> void:
 			var a2 := base_ang - sweep * 0.5 + sweep * e * float(i) / steps
 			trail.append(Vector2.from_angle(a2) * reach * 0.55)
 		var col := Color(1.0, 0.55, 0.2, 0.55 * (1.0 - swing_t)) if swing_wide else Color(1, 0.95, 0.85, 0.5 * (1.0 - swing_t))
-		if trail.size() >= 3 and e > 0.05:
+		if trail.size() >= 3 and sweep * e > 0.2:
 			draw_colored_polygon(trail, col)
 		draw_line(Vector2.from_angle(cur) * 10, Vector2.from_angle(cur) * reach * 0.9, metal, 4.0)
 	else:

@@ -76,6 +76,7 @@ func _physics_process(delta: float) -> void:
 	if lunge > 0.0:
 		lunge -= delta
 	move_and_slide()
+	keep_on_floor()
 	if absf(velocity.x) > 5.0:
 		facing = signf(velocity.x)
 	tick_feedback(delta)

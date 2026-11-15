@@ -72,7 +72,7 @@ func start_floor(d: int) -> void:
 	dungeon.z_index = -5
 	world.add_child(dungeon)
 	dungeon.generate(depth, rng.randi())
-	ambient.color = dungeon.theme["ambient"]
+	ambient.color = (dungeon.theme["ambient"] as Color).darkened(0.45)
 	stairs = Stairs.new()
 	stairs.position = dungeon.exit_position()
 	world.add_child(stairs)
@@ -102,9 +102,25 @@ func _populate() -> void:
 				kind = "wisp"
 			_spawn(kind, dungeon.random_floor_in_room(i), elite_room and j == 0, false)
 	if depth % 3 == 0:
-		boss = _spawn("brute", dungeon.exit_position() + Vector2(0, -90), false, true)
+		boss = _spawn("brute", _boss_spot(last), false, true)
 		boss.title = BOSS_TITLES[(depth / 3 - 1) % BOSS_TITLES.size()]
 		stairs.sealed = true
+
+
+## Open floor in the exit room, clear of walls (the boss is big) and of the stairs.
+func _boss_spot(room: int) -> Vector2:
+	var best := dungeon.exit_position()
+	for i in 40:
+		var p := dungeon.random_floor_in_room(room)
+		var c := dungeon.world_to_cell(p)
+		var clear := true
+		for oy in range(-1, 2):
+			for ox in range(-1, 2):
+				if not dungeon.is_floor(c + Vector2i(ox, oy)):
+					clear = false
+		if clear and p.distance_to(dungeon.exit_position()) > 100.0:
+			return p
+	return best
 
 
 func _spawn(kind: String, pos: Vector2, elite: bool, is_boss: bool) -> Enemy:
